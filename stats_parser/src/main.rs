@@ -30,7 +30,7 @@ fn convert_to_readable(key: &str) -> String {
 }
 
 fn get_username(uuid: &String) -> Result<String> {
-    let json_str = fs::read_to_string("../../school_smp/usercache.json")?;
+    let json_str = fs::read_to_string("../../../school_smp/usercache.json")?;
     let usercache: Vec<UserCache> = serde_json::from_str(&json_str)?;
     let mut username = String::new();
     for value in usercache {
@@ -39,6 +39,19 @@ fn get_username(uuid: &String) -> Result<String> {
         }
     }
     Ok(username)
+}
+
+fn get_uuid(username: &String) -> Result<String> {
+    let json_str = fs::read_to_string("../../../school_smp/usercache.json")?;
+    let usercache: Vec<UserCache> = serde_json::from_str(&json_str)?;
+    let mut uuid = String::new();
+    for value in usercache {
+        if value.name == *username {
+            uuid = value.uuid;
+            return Ok(uuid)
+        }
+    }
+    Ok(uuid)
 }
 
 /// Gets the stats of a uuid (player). To find your uuid, login to the server and run `/list uuids`.
@@ -50,6 +63,22 @@ async fn get_stats(
 ) -> Result<(), Error> {
     let username = get_username(&uuid)?;
     ctx.say(format!("Username: {}", username)).await?;
+    let response = test_main(uuid, stats)?;
+    for chunk in response {
+        ctx.say(chunk).await?;
+    }
+    Ok(())
+}
+
+/// Gets the stats of a username (player). To find your uuid, login to the server and run `/list uuids`.
+#[poise::command(slash_command, prefix_command)]
+async fn get_stats_username(
+    ctx: Context<'_>,
+    #[description = "Username"] username: String,
+    #[description = "What stats category to display"] stats: Option<GetStatsOption>,
+) -> Result<(), Error> {
+    ctx.say(format!("Username: {}", username)).await?;
+    let uuid = get_uuid(&username)?;
     let response = test_main(uuid, stats)?;
     for chunk in response {
         ctx.say(chunk).await?;
@@ -86,8 +115,8 @@ Version: {}
 
 fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<String>> {
     println!("stats/{}.json", uuid);
-    let json_str = fs::read_to_string(format!("../../school_smp/world/stats/{}.json", uuid))?;
-
+    let json_str = fs::read_to_string(format!("../../../school_smp/world/stats/{}.json", uuid))?;
+    println!("../../school_smp/world/stats/{}.json", uuid);
     let stats = serde_json::from_str::<MinecraftStats>(&json_str)?.stats;
     let mut output = Vec::new();
     if let Some(stats_option) = stats_option {
@@ -155,7 +184,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![get_stats(), server()],
+            commands: vec![get_stats(), server(),get_stats_username() ],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

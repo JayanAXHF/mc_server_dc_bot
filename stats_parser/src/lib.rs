@@ -1472,10 +1472,48 @@ pub fn create_killed_stat_names() -> HashMap<String, String> {
     map
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserCache {
     pub name: String,
     pub uuid: String,
     #[serde(rename = "expiresOn")]
     expires_on: String,
 }
+
+pub trait ToJson<T> {
+    fn to_json(&self) -> Result<T, serde_json::Error>;
+}
+
+impl<T> ToJson<T> for String
+where
+    T: for<'a> Deserialize<'a>,
+{
+    fn to_json(&self) -> Result<T, serde_json::Error> {
+        serde_json::from_str(self)
+    }
+}
+
+pub fn fmt_time<T: Into<u64>>(time: T) -> String {
+    let time: u64 = time.into();
+    let seconds = time / 20;
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let seconds = seconds % 60;
+    format!("{:02}:{:02}:{:02}", hours, minutes, seconds)
+}
+
+pub trait Findable {
+    fn find_player(&self, stats: Vec<UserCache>) -> String;
+}
+
+impl Findable for String {
+    fn find_player(&self, stats: Vec<UserCache>) -> String {
+        for player in &stats {
+            if player.uuid == *self {
+                return player.name.clone();
+            }
+        }
+        "Unknown".to_string()
+    }
+}
+

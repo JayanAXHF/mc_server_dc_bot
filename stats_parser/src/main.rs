@@ -6,6 +6,8 @@ use stats_parser::MinecraftStats;
 use stats_parser::*;
 use std::collections::HashMap;
 use std::fs;
+use walkdir::WalkDir;
+use serde_json::Value;
 
 struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -177,6 +179,46 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<S
     Ok(output)
 }
 
+/// Gets the playtime of all the players in the server.
+#[poise::command(slash_command, prefix_command)]
+async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
+    let usercache_text = fs::read_to_string("../../../school_smp/usercache.json").unwrap();
+    let usercache: Vec<UserCache> = usercache_text.to_json().unwrap();
+    let mut out = String::new();
+
+    for entry in WalkDir::new("../../../school_smp/world/stats")
+        .min_depth(1)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
+        let file = entry.path();
+        if file.is_file() {
+            let file_name = file.file_name().unwrap().to_str().unwrap();
+            if file_name.ends_with(".json") {
+                let json_str = fs::read_to_string(file).unwrap();
+                let stats: Value = json_str.to_json().unwrap();
+                let player_name = file_name.split(".").collect::<Vec<_>>()[0]
+                    .to_string()
+                    .find_player(usercache.clone());
+                out.push_str(&format!(
+                    "**{}**: {}\n",
+                    player_name,
+                    fmt_time(
+                        stats["stats"]["minecraft:custom"]["minecraft:play_time"]
+                            .to_string()
+                            .parse::<u64>()
+                            .unwrap()
+                    )
+                ));
+            }
+        }
+    }
+    ctx.say(out).await?;
+
+    Ok(())
+}
+
+
 #[tokio::main]
 async fn main() {
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
@@ -184,7 +226,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![get_stats(), server(),get_stats_username() ],
+            commands: vec![get_stats(), server(),get_stats_username(), playtime()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

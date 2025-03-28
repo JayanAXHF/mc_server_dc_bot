@@ -67,8 +67,12 @@ async fn get_stats(
     let username = get_username(&uuid)?;
     ctx.say(format!("Username: {}", username)).await?;
     let response = test_main(uuid, stats)?;
-    for chunk in response {
-        ctx.say(chunk).await?;
+    for embed in response {
+        let reply = CreateReply {
+            embeds: vec![embed],
+            ..Default::default()
+        };
+        ctx.send(reply).await?;
     }
     Ok(())
 }
@@ -83,8 +87,12 @@ async fn get_stats_username(
     ctx.say(format!("Username: {}", username)).await?;
     let uuid = get_uuid(&username)?;
     let response = test_main(uuid, stats)?;
-    for chunk in response {
-        ctx.say(chunk).await?;
+    for embed in response {
+        let reply = CreateReply {
+            embeds: vec![embed],
+            ..Default::default()
+        };
+        ctx.send(reply).await?;
     }
     Ok(())
 }
@@ -126,14 +134,22 @@ async fn server(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 
-fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<String>> {
+fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<CreateEmbed>> {
     println!("stats/{}.json", uuid);
     let json_str = fs::read_to_string(format!("../../../school_smp/world/stats/{}.json", uuid))?;
     println!("../../school_smp/world/stats/{}.json", uuid);
     let stats = serde_json::from_str::<MinecraftStats>(&json_str)?.stats;
-    let mut output = Vec::new();
+    let mut embeds = vec![];
     if let Some(stats_option) = stats_option {
         let mut temp_output = String::new();
+        let embed = CreateEmbed::new()
+            .title(format!(
+                "{} for {}",
+                stats_option.get_name(),
+                get_username(&uuid)?
+            ))
+            .color(Colour::DARK_GOLD);
+
         let display_stats = match stats_option {
             GetStatsOption::Custom => Some(&stats.custom),
             GetStatsOption::Mined => stats.mined.as_ref(),
@@ -152,14 +168,13 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<S
                 temp_output.push_str(&format!("\t**{}**: {}\n", readable_key, value));
             }
         }
-        output.push(temp_output);
-        return Ok(output);
+        let embed = embed.description(&temp_output);
+        embeds.push(embed);
+        return Ok(embeds);
     }
     for (key, value) in serde_json::to_value(&stats)?.as_object().unwrap() {
         let readable_key = MinecraftStats::get_readable_name(key);
-        println!("## {}", readable_key);
         let mut temp_output = String::new();
-        temp_output.push_str(&format!("## {} \n", readable_key));
         let value_obj = value.as_object();
         let converter_function = match &key[..] {
             "minecraft:custom" => create_used_stat_names(),
@@ -185,9 +200,25 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<S
                 }
             }
         }
-        output.push(temp_output);
+        let chunks = temp_output.lines().collect::<Vec<&str>>();
+        let chunks = chunks.chunks(20).collect::<Vec<&[&str]>>();
+        let fields: Vec<(String, String, bool)> = chunks
+            .iter()
+            .enumerate()
+            .map(|(i, chunk)| {
+                let chunk = chunk.join("\n");
+                (format!("Part {}/{}", i + 1, chunks.len()), chunk, false)
+            })
+            .collect();
+
+        let embed = CreateEmbed::new()
+            .title(format!("{} for {}", readable_key, get_username(&uuid)?))
+            .color(Colour::DARK_GREEN)
+            .fields(fields);
+        embeds.push(embed);
     }
-    Ok(output)
+    Ok(embeds)
+
 }
 
 /// Gets the playtime of all the players in the server.
@@ -195,7 +226,6 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<S
 async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
     let usercache_text = fs::read_to_string("../../../school_smp/usercache.json").unwrap();
     let usercache: Vec<UserCache> = usercache_text.to_json().unwrap();
-    let mut out = String::new();
     let mut fields: Vec<(String, String, bool)> = Vec::new();
 
 
@@ -231,7 +261,7 @@ async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
         .title("Playtime")
         .fields(fields)
         .color(serenity::Colour::TEAL);
-    let mut reply = CreateReply {
+    let reply = CreateReply {
         embeds: vec![embed],
         ..Default::default()
     };

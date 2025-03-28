@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{Result, anyhow};
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use rand::random;

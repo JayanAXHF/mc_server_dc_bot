@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -98,6 +99,24 @@ pub enum GetStatsOption {
     #[name = "custom_entity"]
     CustomEntity,
 }
+
+impl GetStatsOption {
+    pub fn get_name(&self) -> String {
+        match self {
+            GetStatsOption::Custom => "Custom Statistic".to_string(),
+            GetStatsOption::Mined => "Mined Statistic".to_string(),
+            GetStatsOption::Crafted => "Crafted Statistic".to_string(),
+            GetStatsOption::Used => "Used Statistic".to_string(),
+            GetStatsOption::Broken => "Broken Statistic".to_string(),
+            GetStatsOption::PickedUp => "Picked Up Statistic".to_string(),
+            GetStatsOption::Dropped => "Dropped Statistic".to_string(),
+            GetStatsOption::Killed => "Killed Statistic".to_string(),
+            GetStatsOption::KilledBy => "Killed By Statistic".to_string(),
+            GetStatsOption::CustomEntity => "Custom Entity Statistic".to_string(),
+        }
+    }
+}
+
 
 /// Common custom statistics as defined by the Minecraft Wiki
 /// These are commonly used statistics that are part of the "minecraft:custom" category

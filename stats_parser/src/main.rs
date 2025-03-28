@@ -1,13 +1,14 @@
 mod query;
 use anyhow::Result;
-use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{Colour, CreateEmbed, CreateEmbedFooter};
+use poise::{CreateReply, serenity_prelude as serenity};
 use query::stat_full;
+use serde_json::Value;
 use stats_parser::MinecraftStats;
 use stats_parser::*;
 use std::collections::HashMap;
 use std::fs;
 use walkdir::WalkDir;
-use serde_json::Value;
 
 struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -96,24 +97,34 @@ async fn server(ctx: Context<'_>) -> Result<(), Error> {
     for player in response.players {
         players.push_str(&format!("- {}\n", player));
     }
-    let fmt_res = format!(
-        "
-# Server Info
-{}
-Version: {}
-## Players
-{}/{} players online
-{players}
-",
-        response.motd,
-        response.version,
-        response.num_players,
-        response.max_players,
-        players = players,
-    );
-    ctx.say(fmt_res).await?;
+    let fields = vec![
+        ("Version", response.version, false),
+        (
+            "Players",
+            format!(
+                "{}/{} players online",
+                response.num_players, response.max_players
+            ),
+            false,
+        ),
+        ("Players", players, false),
+    ];
+    let embed = CreateEmbed::new()
+        .title("Server Info")
+        .description(response.motd)
+        .color(Colour::DARK_GREEN)
+        .fields(fields)
+        .footer(CreateEmbedFooter::new("Owned by FRXGFA"));
+
+    let reply = CreateReply {
+        embeds: vec![embed],
+        ..Default::default()
+    };
+    ctx.send(reply).await?;
+
     Ok(())
 }
+
 
 fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<String>> {
     println!("stats/{}.json", uuid);
@@ -185,6 +196,8 @@ async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
     let usercache_text = fs::read_to_string("../../../school_smp/usercache.json").unwrap();
     let usercache: Vec<UserCache> = usercache_text.to_json().unwrap();
     let mut out = String::new();
+    let mut fields: Vec<(String, String, bool)> = Vec::new();
+
 
     for entry in WalkDir::new("../../../school_smp/world/stats")
         .min_depth(1)
@@ -200,20 +213,30 @@ async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
                 let player_name = file_name.split(".").collect::<Vec<_>>()[0]
                     .to_string()
                     .find_player(usercache.clone());
-                out.push_str(&format!(
-                    "**{}**: {}\n",
-                    player_name,
+                    fields.push((
+                    player_name.clone(),
                     fmt_time(
                         stats["stats"]["minecraft:custom"]["minecraft:play_time"]
                             .to_string()
                             .parse::<u64>()
-                            .unwrap()
-                    )
+                            .unwrap(),
+                    ),
+                    true,
                 ));
+
             }
         }
     }
-    ctx.say(out).await?;
+    let embed = serenity::CreateEmbed::new()
+        .title("Playtime")
+        .fields(fields)
+        .color(serenity::Colour::TEAL);
+    let mut reply = CreateReply {
+        embeds: vec![embed],
+        ..Default::default()
+    };
+    ctx.send(reply).await?;
+
 
     Ok(())
 }

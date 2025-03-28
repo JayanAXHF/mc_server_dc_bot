@@ -1,5 +1,7 @@
+mod pagination;
 mod query;
 use anyhow::Result;
+use pagination::paginate;
 use poise::serenity_prelude::{Colour, CreateEmbed, CreateEmbedFooter};
 use poise::{CreateReply, serenity_prelude as serenity};
 use query::stat_full;
@@ -9,6 +11,7 @@ use stats_parser::*;
 use std::collections::HashMap;
 use std::fs;
 use walkdir::WalkDir;
+
 
 struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -67,13 +70,8 @@ async fn get_stats(
     let username = get_username(&uuid)?;
     ctx.say(format!("Username: {}", username)).await?;
     let response = test_main(uuid, stats)?;
-    for embed in response {
-        let reply = CreateReply {
-            embeds: vec![embed],
-            ..Default::default()
-        };
-        ctx.send(reply).await?;
-    }
+    paginate(ctx, response).await?;
+
     Ok(())
 }
 
@@ -87,13 +85,8 @@ async fn get_stats_username(
     ctx.say(format!("Username: {}", username)).await?;
     let uuid = get_uuid(&username)?;
     let response = test_main(uuid, stats)?;
-    for embed in response {
-        let reply = CreateReply {
-            embeds: vec![embed],
-            ..Default::default()
-        };
-        ctx.send(reply).await?;
-    }
+    paginate(ctx, response).await?;
+
     Ok(())
 }
 
@@ -172,7 +165,13 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<C
         embeds.push(embed);
         return Ok(embeds);
     }
-    for (key, value) in serde_json::to_value(&stats)?.as_object().unwrap() {
+    for (i, (key, value)) in serde_json::to_value(&stats)?
+        .as_object()
+        .unwrap()
+        .iter()
+        .enumerate()
+    {
+
         let readable_key = MinecraftStats::get_readable_name(key);
         let mut temp_output = String::new();
         let value_obj = value.as_object();
@@ -214,7 +213,9 @@ fn test_main(uuid: String, stats_option: Option<GetStatsOption>) -> Result<Vec<C
         let embed = CreateEmbed::new()
             .title(format!("{} for {}", readable_key, get_username(&uuid)?))
             .color(Colour::DARK_GREEN)
-            .fields(fields);
+            .fields(fields)
+            .footer(CreateEmbedFooter::new(format!("Part {}/{}", i + 1, 10)));
+
         embeds.push(embed);
     }
     Ok(embeds)

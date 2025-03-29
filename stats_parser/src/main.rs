@@ -272,6 +272,58 @@ async fn playtime(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+/// Gets the profile of an account.
+#[poise::command(slash_command, prefix_command)]
+async fn profile(
+    ctx: Context<'_>,
+    #[description = "Username"] username: String,
+) -> Result<(), Error> {
+    let uuid = get_uuid(&username)?;
+    let json_str = fs::read_to_string(format!("../../../school_smp/world/stats/{}.json", uuid))?;
+    let stats = serde_json::from_str::<MinecraftStats>(&json_str)?.stats;
+    let playtime_ticks = stats.custom.get("minecraft:play_time");
+    let playtime_string = if let Some(playtime_ticks) = playtime_ticks {
+        let playtime_ticks = *playtime_ticks;
+        let playtime_u64: u64 = playtime_ticks.try_into().unwrap();
+        fmt_time(playtime_u64)
+    } else {
+        "N/A".to_string()
+    };
+    let killed_by = stats.killed_by;
+    let mut deaths = 0;
+    for (_, value) in serde_json::to_value(killed_by)?.as_object().unwrap().iter() {
+        deaths += value.as_u64().unwrap();
+    }
+    let custom = stats.custom;
+    let kills = custom.get("minecraft:player_kills");
+    let kills: u64 = if let Some(kills) = kills {
+        let kills = *kills;
+        kills.try_into().unwrap()
+    } else {
+        println!("No kills");
+        0_u64
+    };
+
+
+    let embed = CreateEmbed::new()
+        .title(format!("{}'s Profile", username))
+        .description(format!("UUID: `{}`", uuid))
+        .fields([
+            ("Playtime".to_string(), playtime_string, true),
+            ("Kills".to_string(), kills.to_string(), true),
+            ("Deaths".to_string(), deaths.to_string(), true),
+        ])
+        .color(Colour::DARK_GREEN);
+
+    let reply = CreateReply {
+        embeds: vec![embed],
+        ..Default::default()
+    };
+    ctx.send(reply).await?;
+    Ok(())
+}
+
+
 
 #[tokio::main]
 async fn main() {
@@ -280,7 +332,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![get_stats(), server(),get_stats_username(), playtime()],
+            commands: vec![get_stats(), server(),get_stats_username(), playtime(), profile()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

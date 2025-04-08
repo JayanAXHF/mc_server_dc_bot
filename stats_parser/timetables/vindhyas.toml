@@ -1,14 +1,14 @@
 [monday]
-classes = ["SPANISH", "ENG", "MT", "MT", "BIO", "BIO", "SSC", "PER ARTS", "ENG", "SSC"]
+classes = ["ATL", "BIO", "MT", "MT", "PA", "CHEM", "ENGLISH", "SPANISH", "POCSO"]
 
 [tuesday]
-classes = ["CT", "MATHS", "BIO", "PE", "AI", "ENG", "SSC", "CHEM", "CHEM", ""]
+classes = ["CT", "MATHS", "SPANISH", "PE", "PE", "ENG", "PHY", "S SC", "SSC"]
 
 [wednesday]
-classes = ["MSP", "LIB", "SPANISH", "SPANISH", "AI", "ENG", "SPANISH", "SSC", "PHY", ""]
+classes = ["MSP", "SSC", "ENGLISH", "MATHS", "SPANISH", "SPANISH", "LIB", "MATHS", "CHEM"]
 
 [thursday]
-classes = ["ASSEMBLY", "SPANISH", "SPANISH", "SSC", "VA", "ENG", "MATHS", "", "PHY", "PHY"]
+classes = ["ASSEMBLY", "CT", "MATHS", "SSC", "MATHS", "ENGLISH", "ENGLISH", "AI", "VA", "PHY"]
 
 [friday]
-classes = ["CT", "SSC", "SSC", "MATHS", "MATHS", "SSC", "VEC", "VEC", "SPANISH", "BIO", "BIO"]
+classes = ["CT", "S SC", "SSC", "MATHS", "MATHS", "SSC", "VEC", "VEC", "SPANISH", "BIO", "BIO"]

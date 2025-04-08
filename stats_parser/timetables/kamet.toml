@@ -2,10 +2,10 @@
 classes = ["HINDI", "ENG", "MT", "MT", "BIO", "BIO", "SSC", "PER ARTS", "ENG", "SSC"]
 
 [tuesday]
-classes = ["CT", "MATHS", "BIO", "PE", "AI", "ENG", "SSC", "CHEM", "CHEM", ""]
+classes = ["CT", "MATHS", "BIO", "PE", "AI", "ENG", "SSC", "CHEM", "CHEM",]
 
 [wednesday]
-classes = ["MSP", "LIB", "MATHS", "MATHS", "AI", "ENG", "HINDI", "SSC", "PHY", ""]
+classes = ["MSP", "LIB", "MATHS", "MATHS", "AI", "ENG", "HINDI", "SSC", "PHY" ]
 
 [thursday]
 classes = ["ASSEMBLY", "HINDI", "HINDI", "SSC", "VA", "ENG", "MATHS", "", "PHY", "PHY"]

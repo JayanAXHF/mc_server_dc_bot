@@ -1,0 +1,14 @@
+[monday]
+classes = ["SPANISH", "ENG", "MT", "MT", "BIO", "BIO", "SSC", "PER ARTS", "ENG", "SSC"]
+
+[tuesday]
+classes = ["CT", "MATHS", "BIO", "PE", "AI", "ENG", "SSC", "CHEM", "CHEM", ""]
+
+[wednesday]
+classes = ["MSP", "LIB", "SPANISH", "SPANISH", "AI", "ENG", "SPANISH", "SSC", "PHY", ""]
+
+[thursday]
+classes = ["ASSEMBLY", "SPANISH", "SPANISH", "SSC", "VA", "ENG", "MATHS", "", "PHY", "PHY"]
+
+[friday]
+classes = ["CT", "SSC", "SSC", "MATHS", "MATHS", "SSC", "VEC", "VEC", "SPANISH", "BIO", "BIO"]

@@ -117,7 +117,6 @@ impl GetStatsOption {
     }
 }
 
-
 /// Common custom statistics as defined by the Minecraft Wiki
 /// These are commonly used statistics that are part of the "minecraft:custom" category
 #[derive(Debug, Serialize, Deserialize)]
@@ -1533,6 +1532,83 @@ impl Findable for String {
             }
         }
         "Unknown".to_string()
+    }
+}
+
+#[derive(poise::ChoiceParameter)]
+pub enum Day {
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+}
+
+#[derive(poise::ChoiceParameter, Debug)]
+pub enum Section {
+    Everest,
+    Himalayas,
+    Nilgiris,
+    Kamet,
+    Vindhyas,
+    Shivaliks,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Timetable {
+    monday: NormalDay,
+    tuesday: NormalDay,
+    wednesday: NormalDay,
+    thursday: NormalDay,
+    friday: Friday,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NormalDay {
+    classes: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Friday {
+    classes: Vec<String>,
+}
+
+impl From<Section> for String {
+    fn from(section: Section) -> Self {
+        match section {
+            Section::Everest => "everest".to_string(),
+            Section::Himalayas => "himalayas".to_string(),
+            Section::Nilgiris => "nilgiris".to_string(),
+            Section::Kamet => "kamet".to_string(),
+            Section::Vindhyas => "vindhyas".to_string(),
+            Section::Shivaliks => "shivaliks".to_string(),
+        }
+    }
+}
+
+impl From<&str> for Section {
+    fn from(section: &str) -> Self {
+        match section.to_lowercase().as_str() {
+            "himalayas" => Section::Himalayas,
+            "nilgiris" => Section::Nilgiris,
+            "kamet" => Section::Kamet,
+            "vindhyas" => Section::Vindhyas,
+            "shivaliks" => Section::Shivaliks,
+            "everest" => Section::Everest,
+            _ => Section::Everest,
+        }
+    }
+}
+
+impl Timetable {
+    pub fn get_day(&self, day: Day) -> Vec<String> {
+        match day {
+            Day::Monday => self.monday.classes.clone(),
+            Day::Tuesday => self.tuesday.classes.clone(),
+            Day::Wednesday => self.wednesday.classes.clone(),
+            Day::Thursday => self.thursday.classes.clone(),
+            Day::Friday => self.friday.classes.clone(),
+        }
     }
 }
 

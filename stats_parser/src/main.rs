@@ -2,7 +2,8 @@ mod pagination;
 mod query;
 use anyhow::Result;
 use pagination::paginate;
-use poise::serenity_prelude::{Colour, CreateEmbed, CreateEmbedFooter};
+use poise::serenity_prelude::{Colour, CreateEmbed, CreateEmbedFooter, Guild};
+use poise::serenity_prelude::{Role, RoleId};
 use poise::{CreateReply, serenity_prelude as serenity};
 use query::stat_full;
 use serde_json::Value;
@@ -323,6 +324,82 @@ async fn profile(
     Ok(())
 }
 
+#[poise::command(slash_command, prefix_command)]
+async fn timetable(
+    ctx: Context<'_>,
+    #[description = "What day of the week"] day: Day,
+    #[description = "Section"] section: Option<Section>,
+) -> Result<(), Error> {
+    let section = if let None = section {
+        let user = ctx.author_member().await.unwrap();
+        let user_roles = user.roles.clone();
+        let server_roles = {
+            let guild = ctx.guild().unwrap();
+            guild
+                .roles
+                .clone()
+                .iter()
+                .map(|r| r.1.clone())
+                .collect::<Vec<Role>>()
+        };
+
+        let server_roles = server_roles
+            .iter()
+            .filter(|r| {
+                let name = r.name.clone().to_lowercase();
+                let sections = [
+                    "everest",
+                    "nilgiris",
+                    "kamet",
+                    "aravallis",
+                    "shivaliks",
+                    "vindhyas",
+                    "himalayas",
+                ];
+                sections.contains(&name.as_str())
+            })
+            .collect::<Vec<&Role>>();
+
+        let mut has_section_role = None;
+        for role in server_roles.iter() {
+            let section = role.name.clone();
+            let id = role.id;
+            for role in user_roles.iter() {
+                if *role == id {
+                    has_section_role = Some(Section::from(section.as_str()));
+                    break;
+                }
+            }
+        }
+        has_section_role.expect("No section role found")
+    } else {
+        section.unwrap()
+    };
+
+    let section_string = String::from(section);
+    let toml_file = format!("{}.toml", section_string);
+    let timetable_raw =
+        fs::read_to_string(format!("timetables/{}", toml_file)).expect("Could not read timetable");
+    let timetable: Timetable = toml::from_str(&timetable_raw).expect("Could not parse timetable");
+    let day = timetable.get_day(day);
+    let text = day
+        .iter()
+        .map(|x| format!("- {}", x))
+        .collect::<Vec<String>>()
+        .join("\n");
+    let embed = CreateEmbed::new()
+        .title(format!("Timetable for {}", section_string))
+        .description(format!("**{}**", text))
+        .color(Colour::DARK_GREEN);
+    let reply = CreateReply {
+        embeds: vec![embed],
+        ..Default::default()
+    };
+    ctx.send(reply).await?;
+
+    Ok(())
+}
+
 
 
 #[tokio::main]
@@ -332,7 +409,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![get_stats(), server(),get_stats_username(), playtime(), profile()],
+            commands: vec![get_stats(), server(),get_stats_username(), playtime(), profile(), timetable()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

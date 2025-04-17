@@ -1,0 +1,31 @@
+[monday]
+
+classes = [“SSC", "SSC”, "MT", "MT", "HINDI", "HINDI", "MATHS", "PER ARTS", "ENG", "MATHS"]
+
+
+
+
+[tuesday]
+
+classes = ["CT", "ATL", "MATHS", "PE", "PE", "BIO", "BIO", "PHY", "PHY", "SSC"]
+
+
+
+
+[wednesday]
+
+classes = ["MSP", "CHEM", "LIB", "BIO", "HINDI", "SSC", "MATHS", "MATHS", "SSC", "ENG"]
+
+
+
+
+[thursday]
+
+classes = ["ASSEMBLY", "PHY", "POCSO", "MATHS", "MATHS", "ENG", "ENG", "HINDI", "HINDI", "AI"]
+
+
+
+
+[friday]
+
+classes = ["CT","ENG", "ENG", "CHEM", "CHEM", "VA", "VEC", "VEC", "SSC", "AI", "SSC"]
